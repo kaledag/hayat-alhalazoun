@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حياة الحلزون - كتاب تفاعلي</title>
+<style>
+  :root{
+    --cream:#FBF4E4;
+    --leaf-dark:#2f5233;
+    --leaf:#6b9b5e;
+    --leaf-light:#c7e3b8;
+    --clay:#e8935f;
+    --pink:#f2a6b8;
+    --ink:#2b2a26;
+    --paper-edge: 0 10px 30px rgba(43,42,38,0.18), 0 2px 6px rgba(43,42,38,0.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, var(--leaf-light) 0%, transparent 60%),
+      radial-gradient(1000px 700px at 110% 110%, var(--pink) 0%, transparent 55%),
+      var(--cream);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color:var(--ink);
+    overflow:hidden;
+  }
+  .stage{
+    height:100dvh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    padding:16px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-weight:800; font-size:clamp(18px,2.6vw,26px);
+    color:var(--leaf-dark);
+    letter-spacing:0.5px;
+  }
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--clay);}
+
+  .book-wrap{
+    position:relative;
+    width:min(78vw, 46vh * 0.773 * 2 - 0px);
+    max-width:900px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    perspective: 2400px;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+
+  .book{
+    position:relative;
+    width:min(52vw, 62vh);
+    max-width:560px;
+    aspect-ratio: 612/792;
+    border-radius:14px;
+    box-shadow: var(--paper-edge);
+    background:#fff;
+    overflow:hidden;
+    cursor:pointer;
+  }
+  .page{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover;
+    backface-visibility:hidden;
+    transition: transform 0.6s cubic-bezier(.4,.1,.2,1), opacity 0.4s ease;
+  }
+  .page.current{ transform: rotateY(0deg); opacity:1; z-index:2; }
+  .page.next-in{ transform: rotateY(-90deg); opacity:0; z-index:1; }
+  .page.leaving{ transform: rotateY(90deg); opacity:0; z-index:1; }
+
+  .click-zone{
+    position:absolute; top:0; bottom:0; width:36%;
+    z-index:5;
+    display:flex; align-items:center;
+    opacity:0; transition:opacity .25s ease;
+  }
+  .book:hover .click-zone{ opacity:1; }
+  .click-zone.right{ right:0; justify-content:flex-end; padding-inline-end:10px; }
+  .click-zone.left{ left:0; justify-content:flex-start; padding-inline-start:10px; }
+  .arrow-hint{
+    width:34px; height:34px; border-radius:50%;
+    background:rgba(255,255,255,0.85);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    font-size:16px; color:var(--leaf-dark);
+  }
+
+  .controls{
+    display:flex; align-items:center; gap:18px;
+  }
+  .nav-btn{
+    display:flex; align-items:center; gap:8px;
+    background:var(--leaf-dark); color:#fff;
+    border:none; border-radius:999px;
+    padding:10px 20px;
+    font-size:15px; font-weight:700;
+    cursor:pointer;
+    box-shadow:0 4px 14px rgba(47,82,51,0.35);
+    transition: transform .15s ease, background .2s ease;
+  }
+  .nav-btn:hover{ transform:translateY(-2px); background:#274629; }
+  .nav-btn:disabled{ opacity:0.35; cursor:default; transform:none; }
+  .nav-btn svg{ width:16px; height:16px; }
+
+  .page-indicator{
+    font-weight:700; font-size:14px; color:var(--leaf-dark);
+    background:#fff; border:1.5px solid var(--leaf-light);
+    padding:8px 16px; border-radius:999px; min-width:74px; text-align:center;
+  }
+
+  .progress-track{
+    width:min(78vw,560px);
+    height:5px; background:var(--leaf-light);
+    border-radius:999px; overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; background:linear-gradient(90deg,var(--leaf),var(--clay));
+    border-radius:999px; transition: width .4s ease;
+  }
+
+  .hint-text{
+    font-size:12px; color:#7a7364; opacity:0.85;
+  }
+
+  @media (max-width:560px){
+    .book{ width:70vw; }
+    .nav-btn span{ display:none; }
+    .nav-btn{ padding:12px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="brand"><span class="dot"></span> حياة الحلزون</div>
+
+    <div class="book-wrap">
+      <div class="book" id="book" aria-label="كتاب تفاعلي، اضغط للتنقل بين الصفحات">
+        <img class="page current" id="imgA" src="images/pg-01.jpg" alt="صفحة الكتاب">
+        <img class="page" id="imgB" src="images/pg-01.jpg" alt="صفحة الكتاب">
+        <div class="click-zone right" id="zoneNext"><div class="arrow-hint">‹</div></div>
+        <div class="click-zone left" id="zonePrev"><div class="arrow-hint">›</div></div>
+      </div>
+    </div>
+
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="controls">
+      <button class="nav-btn" id="btnNext"><span>الصفحة التالية</span> ‹</button>
+      <div class="page-indicator" id="pageIndicator">1 / 30</div>
+      <button class="nav-btn" id="btnPrev">› <span>الصفحة السابقة</span></button>
+    </div>
+    <div class="hint-text">اضغط على الكتاب، استخدم الأزرار، أو أسهم لوحة المفاتيح للتنقل</div>
+  </div>
+
+<script>
+  const TOTAL = 30;
+  const pad = n => String(n).padStart(2,'0');
+  const srcFor = n => `images/pg-${pad(n)}.jpg`;
+
+  let current = 1;
+  let animating = false;
+
+  const imgA = document.getElementById('imgA');
+  const imgB = document.getElementById('imgB');
+  const pageIndicator = document.getElementById('pageIndicator');
+  const progressFill = document.getElementById('progressFill');
+  const btnNext = document.getElementById('btnNext');
+  const btnPrev = document.getElementById('btnPrev');
+
+  let topEl = imgA, bottomEl = imgB;
+
+  function updateUI(){
+    pageIndicator.textContent = `${current} / ${TOTAL}`;
+    progressFill.style.width = `${(current/TOTAL)*100}%`;
+    btnNext.disabled = current >= TOTAL;
+    btnPrev.disabled = current <= 1;
+  }
+
+  function goTo(n, direction){
+    if(animating || n < 1 || n > TOTAL || n === current) return;
+    animating = true;
+
+    bottomEl.src = srcFor(n);
+    bottomEl.classList.remove('leaving','next-in');
+    bottomEl.classList.add(direction === 'next' ? 'next-in' : 'leaving');
+    bottomEl.style.zIndex = 1;
+
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        topEl.classList.remove('current');
+        topEl.classList.add(direction === 'next' ? 'leaving' : 'next-in');
+
+        bottomEl.classList.remove('next-in','leaving');
+        bottomEl.classList.add('current');
+        bottomEl.style.zIndex = 2;
+      });
+    });
+
+    setTimeout(()=>{
+      current = n;
+      updateUI();
+      [topEl, bottomEl] = [bottomEl, topEl];
+      animating = false;
+    }, 620);
+  }
+
+  document.getElementById('zoneNext').addEventListener('click', ()=>goTo(current+1,'next'));
+  document.getElementById('zonePrev').addEventListener('click', ()=>goTo(current-1,'prev'));
+  btnNext.addEventListener('click', ()=>goTo(current+1,'next'));
+  btnPrev.addEventListener('click', ()=>goTo(current-1,'prev'));
+
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'ArrowLeft') goTo(current+1,'next');   // RTL: gauche = page suivante
+    if(e.key === 'ArrowRight') goTo(current-1,'prev');  // RTL: droite = page précédente
+  });
+
+  // Support tactile (swipe)
+  let touchStartX = null;
+  const book = document.getElementById('book');
+  book.addEventListener('touchstart', e=>{ touchStartX = e.touches[0].clientX; }, {passive:true});
+  book.addEventListener('touchend', e=>{
+    if(touchStartX === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if(Math.abs(dx) > 40){
+      if(dx < 0) goTo(current+1,'next'); else goTo(current-1,'prev');
+    }
+    touchStartX = null;
+  }, {passive:true});
+
+  updateUI();
+</script>
+</body>
+</html>
